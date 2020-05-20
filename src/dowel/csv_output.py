@@ -3,8 +3,10 @@ import csv
 import warnings
 
 from dowel import TabularInput
+
 from dowel.simple_outputs import FileOutput
 from dowel.utils import colorize
+
 
 
 class CsvOutput(FileOutput):
@@ -14,6 +16,9 @@ class CsvOutput(FileOutput):
     """
 
     def __init__(self, file_name):
+        """super() is FileOutput here, it like a proxy, or some automaticly name
+           FileOutput is the parent of CavOutput
+        """
         super().__init__(file_name)
         self._writer = None
         self._fieldnames = None
@@ -25,34 +30,52 @@ class CsvOutput(FileOutput):
         """Accept TabularInput objects only."""
         return (TabularInput, )
 
+
     def record(self, data, prefix=''):
         """Log tabular data to CSV."""
         if isinstance(data, TabularInput):
             to_csv = data.as_primitive_dict
-
+            print('-----')
+            print(to_csv)
             if not to_csv.keys() and not self._writer:
                 return
 
-            if not self._writer:
-                self._fieldnames = set(to_csv.keys())
-                self._writer = csv.DictWriter(
-                    self._log_file,
-                    fieldnames=self._fieldnames,
-                    extrasaction='ignore')
-                self._writer.writeheader()
+            # if not self._writer:
+            #     self._fieldnames = set(to_csv.keys())
+            #     print('!!!!!')
+            #     print(self._fieldnames)
+            #     self._writer = csv.DictWriter(
+            #         self._log_file,
+            #         fieldnames=self._fieldnames,
+            #         extrasaction='ignore')
+            #     self._writer.writeheader()
 
-            if to_csv.keys() != self._fieldnames:
-                self._warn('Inconsistent TabularInput keys detected. '
-                           'CsvOutput keys: {}. '
-                           'TabularInput keys: {}. '
-                           'Did you change key sets after your first '
-                           'logger.log(TabularInput)?'.format(
-                               set(self._fieldnames), set(to_csv.keys())))
+            # if to_csv.keys() != self._fieldnames:
+            #     self._warn('Inconsistent TabularInput keys detected. '
+            #                'CsvOutput keys: {}. '
+            #                'TabularInput keys: {}. '
+            #                'Did you change key sets after your first '
+            #                'logger.log(TabularInput)?'.format(
+            #                    set(self._fieldnames), set(to_csv.keys())))
 
+            # self._writer.writerow(to_csv)
+
+            # for k in to_csv.keys():
+            #     data.mark(k)
+            
+            """Actually, I didn't think that repeatly define self._writer can solve the key problem
+            However, this code gives one solution for the problem.
+            """
+            self._fieldnames = set(to_csv.keys())
+            self._writer = csv.DictWriter(
+                self._log_file,
+                fieldnames=self._fieldnames,
+                extrasaction='ignore')
             self._writer.writerow(to_csv)
 
             for k in to_csv.keys():
                 data.mark(k)
+
         else:
             raise ValueError('Unacceptable type.')
 

@@ -134,7 +134,8 @@ foo  bar
 import abc
 import contextlib
 import warnings
-
+import shutil
+import os
 from dowel.utils import colorize
 
 
@@ -213,6 +214,48 @@ class Logger:
                     type(data).__name__))
             self._warn(warning)
 
+    def reorganize_file(self,data,file_name):
+        """After some adjustments for TabularInput,
+        we can leave the cell blank, if the value of the key is missing
+        
+        Thus, next goal is to expand header
+        ,and expand old rows with empty cells for the new key
+        
+        First, we have recorded all different keys in TabularInput.headers.
+        We will use comma , seperate them ,then form the header of csv file.
+
+        Second, because the header sequence of output of example csv file,
+         "progress.csv", is inverted order, I keep the pattern and fill each row
+         with adding comma. The number of adding comma equals 
+         # of header's comma - # of this row' comma.
+         This step achieve expanding old rows with empty cells for the new key.
+
+         Finally, we copy the temp file to the target file.
+
+        || Most of the code are necessary but messy string or file operations ||
+        """
+        with open("temp_file.txt",'w+') as ft:
+            header = ''
+            comma_num = len(data.headers)-1
+            for i in range(comma_num,-1,-1):
+                header = header + data.headers[i] + ','
+            ft.write(header[:-1] + '\n')            
+            with open(file_name, 'r') as f:
+                line = f.readline()
+                while line:
+                    if line != '\n':
+                        subtract = comma_num-line.count(',')
+                        add_comma = ''
+                        for i in range(subtract):
+                            add_comma = add_comma+','
+                        ft.write(add_comma + line)
+                        line = f.readline()
+                    else:
+                        line = f.readline()
+        shutil.copyfile("temp_file.txt",file_name)
+        os.remove("temp_file.txt")
+
+
     def add_output(self, output):
         """Add a new output to the logger.
 
@@ -248,6 +291,7 @@ class Logger:
         """
         self.remove_output_type(type(output))
         self.add_output(output)
+
 
     def has_output_type(self, output_type):
         """Check to see if a given logger output is attached to the logger.

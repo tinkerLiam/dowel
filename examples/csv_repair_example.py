@@ -10,7 +10,7 @@ logger.add_output(dowel.TextOutput('out.txt'))
 #logger.add_output(dowel.TensorBoardOutput('tensorboard_logdir'))
 
 logger.log('Starting up...')
-for i in range(10000):
+for i in range(100):
     logger.push_prefix('itr {} '.format(i))
     logger.log('Running training step')
 

@@ -134,7 +134,8 @@ foo  bar
 import abc
 import contextlib
 import warnings
-
+import shutil
+import os
 from dowel.utils import colorize
 
 
@@ -213,6 +214,8 @@ class Logger:
                     type(data).__name__))
             self._warn(warning)
 
+
+
     def add_output(self, output):
         """Add a new output to the logger.
 
@@ -248,6 +251,7 @@ class Logger:
         """
         self.remove_output_type(type(output))
         self.add_output(output)
+
 
     def has_output_type(self, output_type):
         """Check to see if a given logger output is attached to the logger.

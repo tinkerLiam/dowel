@@ -22,6 +22,9 @@ class TabularInput:
         self._warned_once = set()
         self._disable_warnings = False
 
+        """Once there is new kind of key, add the new kind of key into the headers"""
+        self.headers = []
+
     def __str__(self):
         """Return a string representation of the table for the logger."""
         return tabulate.tabulate(
@@ -34,6 +37,20 @@ class TabularInput:
         :param val: Value that is to be stored in the table.
         """
         self._dict[self._prefix_str + str(key)] = val
+
+        """If we meet new kind of key, add it into self.headers"""
+        if str(key) not in self.headers:
+            self.headers.append(str(key))
+
+    def refresh_dict(self):
+        """After each iteration, we refresh self._dict
+        Keys of self._dict are what have been appeared
+        Values of self._dict are all blanket. 
+        """
+        self._dict.clear()
+
+        for item in self.headers:
+            self._dict[self._prefix_str+str(item)] = ''
 
     def mark(self, key):
         """Mark key as recorded."""

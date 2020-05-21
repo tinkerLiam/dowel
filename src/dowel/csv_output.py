@@ -1,6 +1,9 @@
 """A `dowel.logger.LogOutput` for CSV files."""
 import csv
 import warnings
+import time
+import shutil
+import os
 
 from dowel import TabularInput
 
@@ -16,15 +19,13 @@ class CsvOutput(FileOutput):
     """
 
     def __init__(self, file_name):
-        """super() is FileOutput here, it like a proxy, or some automaticly name
-           FileOutput is the parent of CavOutput
-        """
         super().__init__(file_name)
         self._writer = None
         self._fieldnames = None
         self._warned_once = set()
         self._disable_warnings = False
-
+        self._file_name=file_name
+        
     @property
     def types_accepted(self):
         """Accept TabularInput objects only."""
@@ -35,38 +36,14 @@ class CsvOutput(FileOutput):
         """Log tabular data to CSV."""
         if isinstance(data, TabularInput):
             to_csv = data.as_primitive_dict
-            print('-----')
-            print(to_csv)
+
             if not to_csv.keys() and not self._writer:
                 return
-
-            # if not self._writer:
-            #     self._fieldnames = set(to_csv.keys())
-            #     print('!!!!!')
-            #     print(self._fieldnames)
-            #     self._writer = csv.DictWriter(
-            #         self._log_file,
-            #         fieldnames=self._fieldnames,
-            #         extrasaction='ignore')
-            #     self._writer.writeheader()
-
-            # if to_csv.keys() != self._fieldnames:
-            #     self._warn('Inconsistent TabularInput keys detected. '
-            #                'CsvOutput keys: {}. '
-            #                'TabularInput keys: {}. '
-            #                'Did you change key sets after your first '
-            #                'logger.log(TabularInput)?'.format(
-            #                    set(self._fieldnames), set(to_csv.keys())))
-
-            # self._writer.writerow(to_csv)
-
-            # for k in to_csv.keys():
-            #     data.mark(k)
             
-            """Actually, I didn't think that repeatly define self._writer can solve the key problem
-            However, this code gives one solution for the problem.
-            """
-            self._fieldnames = set(to_csv.keys())
+            if to_csv.keys() != self._fieldnames:
+                self._fieldnames=to_csv.keys()
+                self.reorganize_file(data)        
+
             self._writer = csv.DictWriter(
                 self._log_file,
                 fieldnames=self._fieldnames,
@@ -78,6 +55,29 @@ class CsvOutput(FileOutput):
 
         else:
             raise ValueError('Unacceptable type.')
+
+
+    def reorganize_file(self,data):
+        """After some adjustments for TabularInput,
+        we can leave the cell blank, if the value of the key is missing
+        
+        Thus, next goal is to expand header
+        ,and expand old rows with empty cells for the new key
+
+        """
+        temp_file=str(int(time.time()*1000))
+        with open(temp_file,'w+') as ft:
+            ft_writer=csv.DictWriter(ft, fieldnames=self._fieldnames)
+            ft_writer.writeheader()
+
+            with open(self._file_name, 'r') as f:
+                f_csv=csv.DictReader(f)
+                for row in f_csv:
+                    ft_writer.writerow(row)
+                        
+        shutil.copyfile(temp_file,self._file_name)
+        self._log_file = open(self._file_name, 'a')
+        os.remove(temp_file)
 
     def _warn(self, msg):
         """Warns the user using warnings.warn.

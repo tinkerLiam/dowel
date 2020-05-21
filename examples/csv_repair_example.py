@@ -18,25 +18,18 @@ for i in range(100):
     tabular.record('loss', 100.0 / (2 + i))
 
     if i < 50:
-        tabular.record('money', i)
-
-    if i > 50:
-        tabular.record('new_data', i)
+        tabular.record('money', 'A')
 
     if i>10 and i<70:
-        tabular.record('luck',i)
+        tabular.record('luck','B')
+
+    if i > 50:
+        tabular.record('new_data', 'C')
 
     logger.log(tabular)
 
     tabular.refresh_dict()
     logger.pop_prefix()
     logger.dump_all()
-
-"""If we cannot know all keys name previously, 
-we need work again to deal with the "raw" data.
-
-Thus, we should reorganize our file again to achieve desired behaviour 
-"""
-logger.reorganize_file(tabular,'out.csv')
 
 logger.remove_all()
